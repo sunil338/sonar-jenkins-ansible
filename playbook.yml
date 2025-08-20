@@ -1,0 +1,46 @@
+---
+- hosts: local
+  become: yes
+
+  tasks:
+    - name: Ensure Java is installed
+      apt:
+        name: openjdk-11-jdk
+        state: present
+        update_cache: yes
+
+    - name: Create Tomcat install directory
+      file:
+        path: /home/sunil/tomcat
+        state: directory
+        mode: '0755'
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.108/bin/apache-tomcat-9.0.108.tar.gz"
+        dest: /home/sunil/tomcat/apache-tomcat.tar.gz
+
+    - name: Extract Tomcat
+      unarchive:
+        src: /home/sunil/tomcat/apache-tomcat.tar.gz
+        dest: /home/sunil/tomcat/tomcat
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Ensure bin scripts are executable
+      file:
+        path: "/home/sunil/tomcat/tomcat/bin/{{ item }}"
+        mode: '0755'
+      loop:
+        - startup.sh
+        - shutdown.sh
+        - catalina.sh
+
+    - name: Copy WAR file to Tomcat webapps
+      copy:
+        src: target/Amazon.war
+        dest: /home/sunil/tomcat/tomcat/webapps/Amazon.war
+        mode: '0644'
+
+    - name: Start Tomcat
+      command: /home/sunil/tomcat/tomcat/bin/startup.sh

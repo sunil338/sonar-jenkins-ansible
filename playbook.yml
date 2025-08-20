@@ -2,12 +2,6 @@
 - hosts: local
 
   tasks:
-    - name: Ensure Java is installed
-      apt:
-        name: openjdk-11-jdk
-        state: present
-        update_cache: yes
-
     - name: Create Tomcat install directory
       file:
         path: /home/sunil/tomcat

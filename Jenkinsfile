@@ -1,5 +1,10 @@
 pipeline {
     agent any
+
+    tools {
+        maven 'Maven'     // Make sure Maven is configured in Jenkins Global Tools
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -7,43 +12,18 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build WAR with Maven') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package'
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Deploy with Ansible') {
             steps {
-                withSonarQubeEnv('LocalSonarQube') {
-                    sh 'mvn sonar:sonar'
-                }
+                sh '''
+                  ansible-playbook -i inventory.ini deploy-tomcat.yml
+                '''
             }
         }
-
-stage('Deploy WAR to Tomcat') {
-    steps {
-        withCredentials([
-            sshUserPrivateKey(credentialsId: 'vm1-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
-            string(credentialsId: 'vault-password-id', variable: 'VAULT_PASSWORD')
-        ]) {
-            sh '''
-                # Fix permissions for SSH key
-                chmod 600 $SSH_KEY_FILE
-
-                # Write vault password
-                echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
-
-                # Run Ansible playbook
-                ansible-playbook \
-                  -i ansible/inventories/production \
-                  ansible/playbooks/deploy-tomcat.yml \
-                  --private-key $SSH_KEY_FILE \
-                  -u $SSH_USER \
-                  --vault-password-file ansible/vault/.vault_pass.txt
-            '''
-           }
-        }
-      }
     }
- }
+}

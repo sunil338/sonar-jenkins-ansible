@@ -1,40 +1,18 @@
----
-- hosts: local
+- hosts: all
   become: yes
-  
+  become_user: sunil
   tasks:
-    - name: Create Tomcat install directory
-      file:
-        path: /home/sunil/tomcat
-        state: directory
-        mode: '0755'
-
-    - name: Download Tomcat
-      get_url:
-        url: "https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.108/bin/apache-tomcat-9.0.108.tar.gz"
-        dest: /home/sunil/tomcat/apache-tomcat.tar.gz
-
-    - name: Extract Tomcat
-      unarchive:
-        src: /home/sunil/tomcat/apache-tomcat.tar.gz
-        dest: /home/sunil/tomcat/tomcat
-        remote_src: yes
-        extra_opts: [--strip-components=1]
-
-    - name: Ensure bin scripts are executable
-      file:
-        path: "/home/sunil/tomcat/tomcat/bin/{{ item }}"
-        mode: '0755'
-      loop:
-        - startup.sh
-        - shutdown.sh
-        - catalina.sh
-
-    - name: Copy WAR file to Tomcat webapps
+    - name: Copy WAR to Tomcat
       copy:
-        src: target/Amazon.war
-        dest: /home/sunil/tomcat/tomcat/webapps/Amazon.war
+        src: /var/lib/jenkins/workspace/sdlc/devops_login/target/devops_login-0.0.2-SNAPSHOT.war
+        dest: /home/sunil/batch11/ansible/sonar/sonar_tomcat/webapps
         mode: '0644'
+        remote_src: yes
+
+    - name: Make Tomcat startup script executable
+      file:
+        path: "/home/sunil/batch11/ansible/sonar/sonar_tomcat/bin/startup.sh"
+        mode: '0755'
 
     - name: Start Tomcat
-      command: /home/sunil/tomcat/tomcat/bin/startup.sh
+      shell: /home/sunil/batch11/ansible/sonar/sonar_tomcat/bin/startup.sh
